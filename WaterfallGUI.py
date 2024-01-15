@@ -5,6 +5,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import pandas as pd
 from time import time
+from random import sample
 
 
 class WaterfallGUI:
@@ -17,27 +18,25 @@ class WaterfallGUI:
         self.Y_AXIS = np.arange(self.WATERFALL_LENGTH)
         self.labs_set = True
 
-        self.matrix_cmap = LinearSegmentedColormap.from_list("",
-                                                             ["#0D0208", "#003B00", "#008F11", "#00FF41"])
         self.CMAPS = [
             'CMRmap', 'Spectral', 'hot', 'jet',
-            'plasma', 'viridis', 'winter_r', "ent3r_the_matrix"]
+            'plasma', 'viridis', 'winter_r']
 
         self.CMAP = 'viridis'
 
         self.sample_macs(x)
         self.create_waterfall_hud(x, **callbacks)
 
-
     def sample_macs(self, x):
-        self.MACIDS = x.MACID.unique()
+        # Sample 30 random MACIDs
+        self.MACIDS = sample([i for i in x.MACID.unique()], 50)
+
         self.waterfall_container = np.zeros((self.WATERFALL_LENGTH, len(self.MACIDS)))
         self.waterfall_container.fill(-100)
         self.waterfall_container = pd.DataFrame(self.waterfall_container)
         self.waterfall_container.columns = self.MACIDS
         self.labels = [i[0:5] for i in self.MACIDS]
         self.MACS_SAMPLED = True
-
 
     def create_waterfall_hud(self, x, **callbacks):
         # Put the plot in
@@ -66,6 +65,13 @@ class WaterfallGUI:
 
     def select_CMAP(self, selection):
         self.CMAP = selection
+        self.ax.clear()
+        self.graph = self.ax.pcolormesh(self.MACIDS,
+                                        self.Y_AXIS,
+                                        self.waterfall_container.to_numpy(dtype='float'),
+                                        vmin=-90, vmax=-20, cmap=self.CMAP)
+
+        self.ax.set_xticklabels(self.labels, rotation=90, fontsize=12, color='white')
 
     def update(self, x):
         if not self.MACS_SAMPLED:
@@ -75,6 +81,7 @@ class WaterfallGUI:
             self.create_waterfall(x, new=False)
 
     def create_waterfall(self, x, new=True):
+        start = time()
         if new:
             self.fig, self.ax = plt.subplots()
             self.fig.set_size_inches(11.5, 8.5)
@@ -84,16 +91,13 @@ class WaterfallGUI:
             self.ax.margins(x=0, y=0., tight=True)
             self.fig.set_facecolor("#3B3B3B")
 
-
         now = x.Time.max()
 
         # Subset the data
-        #data = x[x.Time >= now - 0.3] # 0.3 because it takes about 0.25 seconds on my device to plot the graph
-        data = x[x.Time >= now - 0.15]
+        data = x[x.Time >= now - 0.1]
 
-        if self.MACIDS.shape[0] >= 1:
+        if len(self.MACIDS) >= 1:
             data = data[data.MACID.isin(self.MACIDS)]
-
 
         # Collapse the data to MACID and add it in to the plot df
         grouped_df = data[["MACID", "RSSI"]].groupby(["MACID"])
@@ -107,33 +111,21 @@ class WaterfallGUI:
 
         if new:
             if len(self.MACIDS) > 0:
+                self.graph = self.ax.pcolormesh(self.MACIDS,
+                                    self.Y_AXIS,
+                                    self.waterfall_container.to_numpy(dtype='float'),
+                                    vmin=-90, vmax=-20, cmap=self.CMAP)
 
-                if self.CMAP != 'ent3r_the_matrix':
-                    self.graph = self.ax.imshow(self.waterfall_container.to_numpy(dtype='float'),
-                                                vmin=-90, vmax=-20, cmap=self.CMAP,
-                                                aspect='auto', origin='lower', interpolation='none',
-                                                extent=[0, 20, 0, 20])
-
-                    #self.ax.set_xticks(np.arange(len(self.labels)))
-                    self.ax.set_xticklabels(self.labels, rotation=90, fontsize=12, color='white')
-
-
-                else:
-                    self.ax.pcolormesh(self.MACIDS,
-                                       self.Y_AXIS,
-                                       self.waterfall_container.to_numpy(dtype='float'),
-                                       vmin=-90, vmax=-20, cmap=self.matrix_cmap)
-                    self.ax.set_xticklabels(self.labels, rotation=90, fontsize=12, color='white')
-
+                self.ax.set_xticklabels(self.labels, rotation=90, fontsize=12, color='white')
 
             self.canvas.get_tk_widget().place(relx=0.02, rely=0.02)
             self.canvas.draw()
         else:
-            self.graph.set_data(self.waterfall_container.to_numpy(dtype='float'))
-            self.canvas.draw()
-            self.canvas.flush_events()
-
-
+            self.graph.set_array(self.waterfall_container.to_numpy(dtype='float'))
+            #self.fig.canvas.draw_idle()
+            self.canvas.draw_idle()
+            #self.canvas.flush_events()
+            print(time() - start)
 
 
     def destroy(self):

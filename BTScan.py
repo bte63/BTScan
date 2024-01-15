@@ -61,7 +61,7 @@ class ctkApp:
             elif self.current_hud == 'signal':
                 self.root.after(15, self.update_window)
             elif self.current_hud == 'waterfall':
-                self.root.after(15, self.update_window)
+                self.root.after(2, self.update_window)
         else:
             self.root.quit()
             self.root.destroy()

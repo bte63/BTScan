@@ -103,8 +103,6 @@ class AntennaGUI:
             font=("Roboto",18))
         self.av_signals.place(relx=0.19, rely=0.26)
 
-
-
     def update(self, x):
         self.total_device_count.configure(text=f"Total Device Count\n{len(x.MACID.unique())}")
         self.total_signal_count.configure(text=f"Total Signal Count\n{x.shape[0]}")
