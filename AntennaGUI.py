@@ -128,7 +128,6 @@ class AntennaGUI:
         '''
         Creates or updates a bar graph of average RSSI values
         '''
-        #plt.close()
         if not new:
             self.ax.clear()
 
@@ -140,7 +139,6 @@ class AntennaGUI:
         avs.index = [i[0:5] for i in avs.index]
         avs = avs.iloc[avs.shape[0]-25:, ]
 
-
         if new:
             self.fig, self.ax = plt.subplots()
             self.fig.set_size_inches(5.75, 4.5)
@@ -149,10 +147,8 @@ class AntennaGUI:
         self.ax.hlines(y=avs.index, xmin=-100, xmax=avs['RSSI'], color='skyblue')
         self.ax.plot(avs['RSSI'], avs.index, "o")
 
-        #plt.yticks(my_range, labels=avs.index)
         self.ax.set_title(f'Average RSSI (t={cutoff})')
         self.ax.set_xlabel("Av. RSSI")
-
 
         self.canvas.draw()
 
@@ -176,13 +172,11 @@ class AntennaGUI:
         counts = counts.iloc[0:8, :]
         counts.index = [i[0:5] for i in counts.index]
 
-
         if new:
             self.figup, self.axup = plt.subplots()
             plt.subplots_adjust(bottom=0.15)
             self.figup.set_size_inches(5.75, 4.5)
             self.canvasup = FigureCanvasTkAgg(self.figup, master=self.root)
-
 
         self.axup.bar(counts.index, height=counts.RSSI, label=counts.index, color=self.COLOURS)
         self.axup.set_title(f'Av. Signals per Second (t={cutoff})')

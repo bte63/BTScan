@@ -48,13 +48,7 @@ class ctkApp:
         # Update the hud, repeats every 100ms
         self.root.update()
 
-        if self.current_hud == 'antenna' and self.hud.UPDATE:
-            self.hud.update(x)
-
-        elif self.current_hud == 'signal' and self.hud.UPDATE:
-            self.hud.update(x)
-
-        elif self.current_hud == 'waterfall':
+        if self.hud.UPDATE:
             self.hud.update(x)
 
         if self.swap_view_toggle:
@@ -62,7 +56,12 @@ class ctkApp:
             self.swap_view_toggle = False
 
         if not self.QUIT:
-            self.root.after(100, self.update_window)
+            if self.current_hud == 'antenna':
+                self.root.after(100, self.update_window)
+            elif self.current_hud == 'signal':
+                self.root.after(15, self.update_window)
+            elif self.current_hud == 'waterfall':
+                self.root.after(15, self.update_window)
         else:
             self.root.quit()
             self.root.destroy()
@@ -172,8 +171,6 @@ def on_device_found(device_path, device_props):
                   ignore_index=True)
 
     clean_device(device_path)
-    #print(x)
-
 
 # *********************** ADAPTER SETUP **************************************
 

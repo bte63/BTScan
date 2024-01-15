@@ -3,27 +3,24 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
 
+
 class SignalGUI:
     def __init__(self, root, x, **callbacks):
         self.root = root
         self.UPDATE = True
         self.COLOURS = ["#e50494", "#f77aff", "#7789e1", "#007bc9", "#9dead0",
                         "#7de1ac", "#03b751", "#e9f947", "#cdc90f", "#c5a709"]
-
         self.update_counter = 1
 
         # Get the strongest signal to start with for our plotting
         strongest_sig = x.groupby('MACID').mean().sort_values(by="RSSI", ascending=False)
         strongest_sig = strongest_sig.index[0]
         self.MACID = strongest_sig
-
         self.create_signal_hud(x, **callbacks)
-
 
     def create_signal_hud(self, x, **callbacks):
         # Put the plot in
         self.create_line(x, new=True)
-
 
         # Add buttons
         # Scan on/off button
@@ -104,12 +101,10 @@ class SignalGUI:
             font=("Roboto",18))
         self.av_signals.place(relx=0.19, rely=0.26)
 
-
     def update(self, x):
         cutoff = 25
 
         self.device_signal_count.configure(text=f"Device Signal Count\n{x[x.MACID==self.MACID].shape[0]}")
-
 
         av_rssi = round(x[x.MACID==self.MACID].RSSI[(time.time() - x.Time) < cutoff].mean(), 1)
         av_sig = round(x[x.MACID==self.MACID][(time.time() - x.Time) < cutoff].shape[0] / cutoff, 1)
@@ -131,7 +126,6 @@ class SignalGUI:
         self.create_line(x, new=False)
 
         self.update_counter += 1
-
 
     def select_MACID(self, selection):
         self.MACID = selection
