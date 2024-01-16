@@ -1,3 +1,4 @@
+import os
 import time
 import pandas as pd
 import customtkinter as ctk
@@ -34,7 +35,8 @@ class ctkApp:
             quit=self.quit,
             toggle_update=self.toggle_update,
             toggle_view=self.toggle_view,
-            reset=self.reset_data
+            reset=self.reset_data,
+            save=self.save_data
         )
 
         self.current_hud = 'antenna' # 'antenna', 'signal' or 'waterfall'
@@ -59,9 +61,9 @@ class ctkApp:
             if self.current_hud == 'antenna':
                 self.root.after(100, self.update_window)
             elif self.current_hud == 'signal':
-                self.root.after(15, self.update_window)
+                self.root.after(4, self.update_window)
             elif self.current_hud == 'waterfall':
-                self.root.after(2, self.update_window)
+                self.root.after(4, self.update_window)
         else:
             self.root.quit()
             self.root.destroy()
@@ -122,6 +124,8 @@ class ctkApp:
         now = time.time()
         filename = "BTScan_log_" + str(now) + ".csv"
         x.to_csv(filename, index=False)
+
+        print(f"Data saved as {os.getcwd() + '/' + filename}")
 
 
 # ****************** SCANNER *************************

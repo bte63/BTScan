@@ -28,8 +28,9 @@ class WaterfallGUI:
         self.create_waterfall_hud(x, **callbacks)
 
     def sample_macs(self, x):
-        # Sample 30 random MACIDs
-        self.MACIDS = sample([i for i in x.MACID.unique()], 50)
+        N = min(50, len(x.MACID.unique()))
+        # Sample N random MACIDs
+        self.MACIDS = sample([i for i in x.MACID.unique()], N)
 
         self.waterfall_container = np.zeros((self.WATERFALL_LENGTH, len(self.MACIDS)))
         self.waterfall_container.fill(-100)
@@ -81,7 +82,7 @@ class WaterfallGUI:
             self.create_waterfall(x, new=False)
 
     def create_waterfall(self, x, new=True):
-        start = time()
+
         if new:
             self.fig, self.ax = plt.subplots()
             self.fig.set_size_inches(11.5, 8.5)
@@ -90,14 +91,19 @@ class WaterfallGUI:
             self.fig.subplots_adjust(left=0,right=1,bottom=0.1,top=1)
             self.ax.margins(x=0, y=0., tight=True)
             self.fig.set_facecolor("#3B3B3B")
+            self.last_scan = x.Time.max() - 0.1
 
-        now = x.Time.max()
+
 
         # Subset the data
-        data = x[x.Time >= now - 0.1]
+        data = x[x.Time >= self.last_scan]
 
-        if len(self.MACIDS) >= 1:
-            data = data[data.MACID.isin(self.MACIDS)]
+        # Store the final scan time for the next iteration
+        self.last_scan = x.Time.max()
+
+        # Subset the data
+        #if len(self.MACIDS) >= 1:
+        data = data[data.MACID.isin(self.MACIDS)]
 
         # Collapse the data to MACID and add it in to the plot df
         grouped_df = data[["MACID", "RSSI"]].groupby(["MACID"])
@@ -107,6 +113,8 @@ class WaterfallGUI:
         self.waterfall_container = pd.concat([self.waterfall_container, grouped_df], ignore_index=True)
 
         self.waterfall_container.fillna(-100, inplace=True)
+
+        # Drop the first row (which is the oldest reading)
         self.waterfall_container = self.waterfall_container.iloc[1:, :]
 
         if new:
@@ -122,10 +130,7 @@ class WaterfallGUI:
             self.canvas.draw()
         else:
             self.graph.set_array(self.waterfall_container.to_numpy(dtype='float'))
-            #self.fig.canvas.draw_idle()
-            self.canvas.draw_idle()
-            #self.canvas.flush_events()
-            print(time() - start)
+            self.fig.canvas.draw_idle()
 
 
     def destroy(self):

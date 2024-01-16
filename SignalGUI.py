@@ -11,6 +11,7 @@ class SignalGUI:
         self.COLOURS = ["#e50494", "#f77aff", "#7789e1", "#007bc9", "#9dead0",
                         "#7de1ac", "#03b751", "#e9f947", "#cdc90f", "#c5a709"]
         self.update_counter = 1
+        self.max_graph_time = 120
 
         # Get the strongest signal to start with for our plotting
         strongest_sig = x.groupby('MACID').mean().sort_values(by="RSSI", ascending=False)
@@ -132,23 +133,37 @@ class SignalGUI:
         self.device_name.configure(text=f"Device\n{self.MACID}")
 
     def create_line(self, x, new=True):
+        now = time.time()
+
+        m1 = x.MACID == self.MACID
+        m2 = now - x.Time <= self.max_graph_time
+        m3 = m1 & m2
+
         if new:
+            # Create the graph and set the parameters
             self.figl, self.axl = plt.subplots()
-            self.figl.set_size_inches(11.5, 4.5)
+            self.figl.set_size_inches(11.5, 5)
             self.canvasl = FigureCanvasTkAgg(self.figl, master=self.root)
 
-        mask = x.MACID == self.MACID
+            self.axl.set_title("RSSI Over Time")
+            self.axl.set_xlabel("Time")
+            self.axl.set_ylabel("RSSI")
 
-        self.axl.set_title("RSSI Over Time")
-        self.axl.set_xlabel("Time")
-        self.axl.set_ylabel("RSSI")
-        self.axl.plot(x.Time[mask], x.RSSI[mask])
-        self.canvasl.draw()
+            self.graph, = self.axl.plot((x.Time[m3] - now), x.RSSI[m3])
 
-        if new:
-            self.canvasl.get_tk_widget().place(relx=0.02, rely=0.48)
+            # Draw and place the graph
+            self.canvasl.get_tk_widget().place(relx=0.02, rely=0.4)
+            self.canvasl.draw()
+
         else:
-            self.axl.clear()
+            # Update the graph
+            self.graph.set_ydata(x.RSSI[m3])
+            self.graph.set_xdata(x.Time[m3])
+            self.axl.relim()
+            self.axl.autoscale_view()
+
+            self.figl.canvas.draw_idle()
+
 
     def destroy(self):
         plt.close('all')

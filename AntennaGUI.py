@@ -2,6 +2,7 @@ import customtkinter as ctk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
+import numpy as np
 
 # Waterfall Plot of signal strengths vs MACIDs
 
@@ -53,6 +54,17 @@ class AntennaGUI:
 
         quit_button.place(relx=0.02, rely=0.18)
 
+        # Save data button
+        reset_button = ctk.CTkButton(
+            master=self.root,
+            width=150,
+            height=50,
+            text="Save Data",
+            command=callbacks['save'])
+
+        reset_button.place(relx=0.02, rely=0.25)
+
+
         # Data Reset Button
         reset_button = ctk.CTkButton(
             master=self.root,
@@ -61,7 +73,7 @@ class AntennaGUI:
             text="Reset Data",
             command=callbacks['reset'])
 
-        reset_button.place(relx=0.02, rely=0.25)
+        reset_button.place(relx=0.02, rely=0.32)
 
         # D
 
@@ -94,7 +106,7 @@ class AntennaGUI:
             font=("Roboto",18))
         self.av_rssi.place(relx=0.2, rely=0.18)
 
-        # Average Signal Strength
+        # Average Signals per second
         self.av_signals = ctk.CTkLabel(
             master=self.root,
             text=f"Av. Signals per Second\n{round(x[(x.Time - time.time()) < 5].shape[0], 1)}",
@@ -203,16 +215,22 @@ class AntennaGUI:
             self.figh.set_size_inches(6.95, 4)
             self.canvash = FigureCanvasTkAgg(self.figh, master=self.root)
 
-        self.axh.scatter(avs.RSSI, counts.RSSI, 120, color="#7789e1", alpha=0.4)
-        self.axh.set_title(f"Av. RSSI vs Av. Signals Received (t={cutoff})")
-        self.axh.set_xlabel("Av. RSSI")
-        self.axh.set_ylabel("Av. Signals Received")
-        self.canvash.draw()
-
-        if new:
+            self.graph = self.axh.scatter(avs.RSSI, counts.RSSI, 140, color="#7789e1", alpha=0.4)
+            self.axh.set_xlim(-80, -30)
+            self.axh.set_ylim(0, 16)
+            self.axh.set_title(f"Av. RSSI vs Av. Signals Received (t={cutoff})")
+            self.axh.set_xlabel("Av. RSSI")
+            self.axh.set_ylabel("Av. Signals Received")
+            self.canvash.draw()
             self.canvash.get_tk_widget().place(relx=0.4, rely=0.025)
+
         else:
-            self.axh.clear()
+            self.graph.set_offsets(
+                np.array([i for i in zip(avs.RSSI, counts.RSSI)])
+            )
+
+            self.figh.canvas.draw_idle()
+
 
     def destroy(self):
         plt.close('all')
